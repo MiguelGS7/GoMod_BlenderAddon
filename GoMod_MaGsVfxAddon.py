@@ -4,7 +4,7 @@ bl_info = {
     "version": (1, 0),
     "blender": (2, 79, 0),
     "location": "View3D > Tools > GoMod",
-    "description": "Adds a new Mesh Object",
+    "description": "Adds the GoMod panel under Tool Shelf Tab. Creates modular assets easy in Blender",
     "warning": "",
     "wiki_url": "",
     "category": "Add Mesh",
