@@ -15,6 +15,7 @@ from bpy.types import Panel, Operator
 from rna_prop_ui import PropertyPanel
 
 
+
 #________________________ GOMOD ASSET MAKER ________________________
 # Custom CONFORM operator
 class ConformOpe(Operator):
@@ -136,7 +137,6 @@ class AssetMakerPanel(Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
     bl_label = 'GoMod Asset Maker'
-    bl_context = 'objectmode'
     bl_category = 'GoMod'
     
     # Draw UI elements here
@@ -153,8 +153,10 @@ class AssetMakerPanel(Panel):
         
         row = layout.row()
         row.operator('my.conform', text='Conform Object', icon='BBOX')
-        row = layout.row()     
+        row = layout.row()
+        row.scale_y = 1.5
         row.operator('my.modroller', text='Mod Roller', icon='MOD_SHRINKWRAP')
+        row.scale_y = 1.5
         row.operator('my.modwall', text='Mod Wall', icon='MOD_BUILD')
         
         row = layout.row()
@@ -174,8 +176,6 @@ class AssetMakerPanel(Panel):
         
         row.scale_y = 2.0
         row.operator('my.convmesh', text='Mesh', icon='OUTLINER_OB_GROUP_INSTANCE')
-        row = layout.row()
-        
 
 
 
@@ -203,7 +203,7 @@ class SelecGroupOpe(Operator):
         obj = context.object
         bpy.ops.object.select_grouped(type='GROUP')
         
-        self.report({'INFO'}, 'Group Created!')
+        self.report({'INFO'}, 'Group Selected!')
         return {'FINISHED'}
 
 # Custom GRID operator
@@ -219,7 +219,7 @@ class GridOpe(Operator):
         bpy.ops.mesh.delete(type='ONLY_FACE')
         bpy.ops.object.mode_set(mode='OBJECT')
         
-        self.report({'INFO'}, 'Group Created!')
+        self.report({'INFO'}, 'Grid Created!')
         return {'FINISHED'}
 
 # Custom LINE operator
@@ -234,13 +234,13 @@ class LineOpe(Operator):
         bpy.ops.curve.primitive_nurbs_path_add(radius=30, view_align=False, enter_editmode=False, location=(0, 0, 0))
         bpy.ops.object.convert(target='MESH')
         
-        self.report({'INFO'}, 'Group Created!')
+        self.report({'INFO'}, 'Line Created!')
         return {'FINISHED'}
 
 # Custom SNAP TO PATH operator
 class SnapOpe(Operator):
     """Activates snaping to path"""
-    bl_idname = 'my.snap'
+    bl_idname = 'my.snapon'
     bl_label = 'To Center'
     
     def execute(self, context):
@@ -252,7 +252,25 @@ class SnapOpe(Operator):
         bpy.context.scene.tool_settings.snap_target = 'MEDIAN'
         
 
-        self.report({'INFO'}, 'Ready to Snap!')
+        self.report({'INFO'}, 'Snap On!')
+        return {'FINISHED'}
+
+# Custom UNSNAP TO PATH operator
+class UnSnapOpe(Operator):
+    """Deactivates snaping to path"""
+    bl_idname = 'my.snapoff'
+    bl_label = 'To Center'
+    
+    def execute(self, context):
+            
+        obj = context.object
+    
+        bpy.context.scene.tool_settings.use_snap = False
+        bpy.context.scene.tool_settings.snap_element = 'INCREMENT'
+
+        
+
+        self.report({'INFO'}, 'Snap Off!')
         return {'FINISHED'}
 
 
@@ -262,7 +280,6 @@ class AssetBuilderPanel(Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
     bl_label = 'GoMod Asset Builder'
-    bl_context = 'objectmode'
     bl_category = 'GoMod'
     
     # Draw UI elements here
@@ -271,8 +288,6 @@ class AssetBuilderPanel(Panel):
         obj = context.object
         row = layout.row(align=True)
         
-        
-    
     # Get selected object
         obj = context.object
 
@@ -297,21 +312,27 @@ class AssetBuilderPanel(Panel):
         row = layout.row()
         row = layout.row()
         row = layout.row()
-        row.label(text="Arranged Variations:")
+        row.label(text="Arrange Variations:")
         row = layout.row()
-        row.scale_y = 2.0
+        row.scale_y = 1.5
         row.operator('my.grid', text='Grid Path', icon='MOD_LATTICE')
-        row.scale_y = 2.0
+        row.scale_y = 1.5
         row.operator('my.line', text='Line Path', icon='MAN_SCALE')
         
+        row = layout.row()
+        row = layout.row()
+        row.label(text='Snap to Path:')
         row = layout.row(align=True)
         row.label()
-        sub = row.row()
-        sub.scale_x = 3.0
-        sub.scale_y = 1.5
-        sub.operator('my.snap', text='Snap', icon='SNAP_ON')
-        row.label()
+        row.scale_y = 1.5
+        row.operator('my.snapon', text='On', icon='SNAP_ON')
+        row.scale_y = 1.5
+        row.operator('my.snapoff', text='Off', icon='SNAP_OFF')
         
+        row.label()
+
+
+
 #________________________ GOMOD ASSET TOOLS ________________________        
 
 # Custom UV WINDOW operator
@@ -328,22 +349,50 @@ class UvWinOpe(Operator):
         bpy.context.area.type = 'IMAGE_EDITOR'
         
 
-        self.report({'INFO'}, 'Group Created!')
+        self.report({'INFO'}, 'Edit UVs!')
         return {'FINISHED'}
 
-# Custom RANDOMIZE operator
-class RandomOpe(Operator):
-    """Randomize Transform, for selected object"""
-    bl_idname = 'my.random'
+# Custom  SMOOTER operator
+class SmootherOpe(Operator):
+    """Aplies Subssurface and Edge Split Modifiers, smooth shade"""
+    bl_idname = 'my.smooth'
     bl_label = 'To Center'
     
     
     def execute(self, context):
         obj = context.object
-        bpy.ops.object.randomize_transform()
+        bpy.ops.object.shade_smooth()
+        bpy.ops.object.modifier_add(type='SUBSURF')
+        bpy.context.object.modifiers["Subsurf"].levels = 1
+        bpy.context.object.modifiers["Subsurf"].render_levels = 1
+        bpy.context.object.modifiers["Subsurf"].show_expanded = False
+        bpy.ops.object.modifier_add(type='EDGE_SPLIT')
+        bpy.context.object.modifiers["EdgeSplit"].show_expanded = False
+                
+        self.report({'INFO'}, 'Smoother Aplyed!')
+        return {'FINISHED'}
+
+# Custom  DISK operator
+class DiskOpe(Operator):
+    """Converts Curve to a solid Circle"""
+    bl_idname = 'my.disk'
+    bl_label = 'To Center'
+    
+    
+    def execute(self, context):
         obj = context.object
+        bpy.ops.object.convert(target='MESH')
+        bpy.ops.object.editmode_toggle()
+        bpy.ops.mesh.select_all(action='TOGGLE')
+        bpy.ops.mesh.fill_grid(span=12)
+        bpy.ops.mesh.flip_normals()
+        bpy.ops.object.editmode_toggle()
         
-        self.report({'INFO'}, 'Randomized!')
+        bpy.ops.object.modifier_add(type='SOLIDIFY')
+        bpy.context.object.modifiers["Solidify"].thickness = 0.3
+        bpy.context.object.modifiers["Solidify"].show_expanded = False
+        
+        self.report({'INFO'}, 'Disk Ready!')
         return {'FINISHED'}
 
 # Panels with input UI
@@ -352,7 +401,6 @@ class AssetToolsPanel(Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
     bl_label = 'GoMod Asset Tools'
-    bl_context = 'objectmode'
     bl_category = 'GoMod'
     
     # Draw UI elements here
@@ -368,11 +416,15 @@ class AssetToolsPanel(Panel):
         # Panel Layouts
         
         row.scale_y = 2.0
-        row.operator('my.uvwin', text='UV Editor', icon='UV_VERTEXSEL')
-        
+        row.operator('my.uvwin', text='UV Editor', icon='UV_ISLANDSEL')
         row.scale_y = 2.0
-        row.operator('my.random', text='Randomize', icon='RNDCURVE')
+        row.operator('my.smooth', text='Smoother', icon='SCULPTMODE_HLT')
+        
         row = layout.row()
+        row.scale_y = 2.0
+        row.operator('my.disk', text='Disk', icon='SURFACE_NCIRCLE')
+        row.label()
+
 
   
 # Register
@@ -389,9 +441,11 @@ class register():
     bpy.utils.register_class(GridOpe)
     bpy.utils.register_class(LineOpe)
     bpy.utils.register_class(SelecGroupOpe)
-    bpy.utils.register_class(RandomOpe)
-    bpy.utils.register_class(UvWinOpe)
     bpy.utils.register_class(SnapOpe)
+    bpy.utils.register_class(UnSnapOpe)
+    bpy.utils.register_class(UvWinOpe)
+    bpy.utils.register_class(SmootherOpe)
+    bpy.utils.register_class(DiskOpe)
     
 # Unregister
 def unregister():
@@ -407,10 +461,13 @@ def unregister():
     bpy.utils.unregister_class(GridOpe)
     bpy.utils.unregister_class(LineOpe)
     bpy.utils.unregister_class(SelecGroupOpe)
-    bpy.utils.unregister_class(RandomOpe)
-    bpy.utils.register_class(UvWinOpe)
     bpy.utils.register_class(SnapOpe)
+    bpy.utils.register_class(UnSnapOpe)
+    bpy.utils.register_class(UvWinOpe)
+    bpy.utils.unregister_class(SmootherOpe)
+    bpy.utils.register_class(DiskOpe)
     
 # Run Script in text editor
 if __name__ == '__main__':
     register()
+    
