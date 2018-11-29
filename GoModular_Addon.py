@@ -14,6 +14,7 @@ import bpy
 from bpy.types import Panel, Operator
 from rna_prop_ui import PropertyPanel
 
+
 #________________________ GOMOD ASSET MAKER ________________________
 # Custom CONFORM operator
 class ConformOpe(Operator):
@@ -27,7 +28,7 @@ class ConformOpe(Operator):
         bpy.ops.object.rotation_clear(clear_delta=False)
         bpy.ops.object.scale_clear(clear_delta=False)
         
-        self.report({'INFO'}, 'Conform Ready!')
+        self.report({'INFO'}, 'Conformed!')
         return {'FINISHED'}
     
 # Custom MODULAR ROLLER operator
@@ -58,7 +59,6 @@ class ModRollerOpe(Operator):
         bpy.context.object.modifiers["Curve"].object = bpy.data.objects[b]
         bpy.context.object.modifiers["Array"].curve = bpy.data.objects[b]
         bpy.ops.transform.resize(value=(1.01922, 1.01922, 1.01922))
-
         
         bpy.context.object.modifiers["Curve"].show_expanded = False
         
@@ -117,10 +117,10 @@ class ConvMeshOpe(Operator):
         bpy.context.object.show_bounds = False
         bpy.ops.object.convert(target='MESH')
         
-        bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.mesh.select_all(action='TOGGLE')
+        bpy.ops.object.editmode_toggle()
+        bpy.ops.mesh.select_all(action='SELECT')
         bpy.ops.mesh.remove_doubles()
-        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.object.editmode_toggle()
         
         
         bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
@@ -237,24 +237,28 @@ class LineOpe(Operator):
         self.report({'INFO'}, 'Group Created!')
         return {'FINISHED'}
 
-# Custom RANDOMIZE operator
-class RandomOpe(Operator):
-    """Randomize Transform, for selected object"""
-    bl_idname = 'my.random'
+# Custom SNAP TO PATH operator
+class SnapOpe(Operator):
+    """Activates snaping to path"""
+    bl_idname = 'my.snap'
     bl_label = 'To Center'
     
-    
     def execute(self, context):
+            
         obj = context.object
-        bpy.ops.object.randomize_transform()
+    
+        bpy.context.scene.tool_settings.use_snap = True
+        bpy.context.scene.tool_settings.snap_element = 'VERTEX'
+        bpy.context.scene.tool_settings.snap_target = 'MEDIAN'
         
-        self.report({'INFO'}, 'Randomize!')
+
+        self.report({'INFO'}, 'Ready to Snap!')
         return {'FINISHED'}
 
 
 # Panels with input UI
 class AssetBuilderPanel(Panel):
-    """VIEW for GoMod Modular Assets Maker"""
+    """VIEW for GoMod Modular Assets Builder"""
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
     bl_label = 'GoMod Asset Builder'
@@ -299,9 +303,14 @@ class AssetBuilderPanel(Panel):
         row.operator('my.grid', text='Grid Path', icon='MOD_LATTICE')
         row.scale_y = 2.0
         row.operator('my.line', text='Line Path', icon='MAN_SCALE')
-        row = layout.row()
-        row.operator('my.random', text='Randomize', icon='RNDCURVE')
-
+        
+        row = layout.row(align=True)
+        row.label()
+        sub = row.row()
+        sub.scale_x = 3.0
+        sub.scale_y = 1.5
+        sub.operator('my.snap', text='Snap', icon='SNAP_ON')
+        row.label()
         
 #________________________ GOMOD ASSET TOOLS ________________________        
 
@@ -322,6 +331,21 @@ class UvWinOpe(Operator):
         self.report({'INFO'}, 'Group Created!')
         return {'FINISHED'}
 
+# Custom RANDOMIZE operator
+class RandomOpe(Operator):
+    """Randomize Transform, for selected object"""
+    bl_idname = 'my.random'
+    bl_label = 'To Center'
+    
+    
+    def execute(self, context):
+        obj = context.object
+        bpy.ops.object.randomize_transform()
+        obj = context.object
+        
+        self.report({'INFO'}, 'Randomized!')
+        return {'FINISHED'}
+
 # Panels with input UI
 class AssetToolsPanel(Panel):
     """VIEW for GoMod Modular Assets Builder"""
@@ -337,20 +361,17 @@ class AssetToolsPanel(Panel):
         obj = context.object
         row = layout.row(align=True)
         
-        
     
     # Get selected object
         obj = context.object
 
         # Panel Layouts
-        row.label()
-    
-        sub = row.row()
-        sub.scale_y = 2.0
-        sub.scale_x = 5.0
-        sub.operator('my.uvwin', text='UV Editor', icon='UV_VERTEXSEL')
         
-        row.label()
+        row.scale_y = 2.0
+        row.operator('my.uvwin', text='UV Editor', icon='UV_VERTEXSEL')
+        
+        row.scale_y = 2.0
+        row.operator('my.random', text='Randomize', icon='RNDCURVE')
         row = layout.row()
 
   
@@ -370,6 +391,7 @@ class register():
     bpy.utils.register_class(SelecGroupOpe)
     bpy.utils.register_class(RandomOpe)
     bpy.utils.register_class(UvWinOpe)
+    bpy.utils.register_class(SnapOpe)
     
 # Unregister
 def unregister():
@@ -387,8 +409,8 @@ def unregister():
     bpy.utils.unregister_class(SelecGroupOpe)
     bpy.utils.unregister_class(RandomOpe)
     bpy.utils.register_class(UvWinOpe)
+    bpy.utils.register_class(SnapOpe)
     
 # Run Script in text editor
 if __name__ == '__main__':
     register()
-    
