@@ -391,6 +391,7 @@ class DiskOpe(Operator):
         bpy.ops.object.modifier_add(type='SOLIDIFY')
         bpy.context.object.modifiers["Solidify"].thickness = 0.3
         bpy.context.object.modifiers["Solidify"].show_expanded = False
+        bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
         
         self.report({'INFO'}, 'Disk Ready!')
         return {'FINISHED'}
